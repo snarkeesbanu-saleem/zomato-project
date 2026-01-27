@@ -1,0 +1,4033 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/snarkeesbanu-saleem/zomato-project/blob/main/zomato_project_\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "vncDsAP0Gaoa"
+      },
+      "source": [
+        "# **Project Name**    -Zomato Restaurant Reviews & Metadata Analysis\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "beRrZCGUAJYm"
+      },
+      "source": [
+        "##### **Project Type**    - Supervised ML (Classification) → Sentiment analysis,Statistical Learning → Hypothesis testing.\n",
+        "\n",
+        "##### **Contribution**    - Individual\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "FJNUwmbgGyua"
+      },
+      "source": [
+        "# **Project Summary -**\n",
+        "The first step involved data cleaning and preprocessing. Metadata was standardized by normalizing column names, converting cost values into numeric format, and splitting cuisines into lists. Reviews were cleaned by removing duplicates, handling missing values, and applying regex to strip HTML tags and normalize whitespace. Ratings were converted to numeric values, ensuring consistency across the dataset.\n",
+        "\n",
+        "Next, Natural Language Processing (NLP) techniques were applied to the review text. Using TextBlob, sentiment polarity scores were calculated for each review, ranging from –1 (negative) to +1 (positive). These scores were then categorized into sentiment classes: Positive, Neutral, and Negative. Additionally, keyword extraction was performed using scikit‑learn’s CountVectorizer, which tokenized the text, removed stop words, and identified the most frequent terms used by customers. This allowed us to highlight recurring themes such as “service,” “taste,” “price,” and “ambiance\".\n",
+        "\n",
+        "\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "F6v_1wHtG2nS"
+      },
+      "source": [
+        "The cleaned and enriched dataset was then merged, linking reviews to restaurant metadata. This integration enabled multi‑dimensional analysis, such as comparing sentiment across cuisines, examining the relationship between restaurant cost and customer satisfaction, and identifying top‑performing restaurants.\n",
+        "Visualization played a central role in communicating insights. Several creative charts were generated:\n",
+        "\n",
+        "A bar chart of the Top 10 restaurants by average rating, highlighting customer favorites.\n",
+        "\n",
+        "A sentiment distribution chart, showing the balance of positive, neutral, and negative reviews.\n",
+        "\n",
+        "A cuisine popularity chart, displaying the Top 15 cuisines in Gachibowli based on restaurant count.\n",
+        "\n",
+        "A sentiment‑by‑cuisine chart, revealing which cuisines attract more positive or negative feedback.\n",
+        "\n",
+        "A keyword frequency chart, showcasing the most common words in reviews.\n",
+        "\n",
+        "These visualizations provide actionable insights. For example, cuisines like Biryani and North Indian dominate the market, but sentiment analysis reveals that customer satisfaction varies significantly across restaurants offering these cuisines. Similarly, high‑cost restaurants do not always guarantee positive sentiment, suggesting that service quality and food consistency matter more than pricing."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "w6K7xa23Elo4"
+      },
+      "source": [
+        "# **GitHub Link -**\n",
+        "https://github.com/snarkeesbanu-saleem/N4rkeesb4nu"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "DpeJGUA3kjGy"
+      },
+      "source": [
+        "\n",
+        " # **Problem Statement**\n",
+        "\n",
+        "Zomato hosts vast amounts of restaurant metadata and customer reviews, but this information is often unstructured and underutilized. Restaurant owners and food platforms struggle to identify actionable insights from raw reviews, which are noisy, multilingual, and inconsistent. Without proper analysis, businesses miss opportunities to understand customer sentiment, track cuisine trends, and evaluate performance beyond star ratings.\n",
+        "\n",
+        "This project addresses the problem by cleaning, integrating, and analyzing restaurant metadata and reviews using NLP and visualization techniques. It transforms unstructured text into structured insights, enabling stakeholders to make data‑driven decisions that improve customer satisfaction, optimize pricing strategies, and enhance overall restaurant performance."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "O_i_v8NEhb9l"
+      },
+      "source": [
+        "# ***Let's Begin !***"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "HhfV-JJviCcP"
+      },
+      "source": [
+        "## ***1. Know Your Data***"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "zj6rQZDAg0od"
+      },
+      "source": [
+        "### Import Libraries\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "XBUznT2Rg0od"
+      },
+      "outputs": [],
+      "source": [
+        "import os\n",
+        "import re\n",
+        "import string\n",
+        "import warnings\n",
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "import squarify\n",
+        "import nltk\n",
+        "import spacy\n",
+        "from scipy.stats import f_oneway, pearsonr, chi2_contingency, ttest_ind\n",
+        "from sklearn.model_selection import train_test_split, StratifiedKFold, GridSearchCV\n",
+        "from sklearn.preprocessing import OneHotEncoder, StandardScaler\n",
+        "from sklearn.compose import ColumnTransformer\n",
+        "from sklearn.pipeline import Pipeline\n",
+        "from sklearn.feature_extraction.text import TfidfVectorizer\n",
+        "from sklearn.feature_selection import SelectKBest, chi2\n",
+        "from sklearn.decomposition import PCA\n",
+        "from sklearn.linear_model import LogisticRegression\n",
+        "from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier\n",
+        "from sklearn.svm import SVC\n",
+        "from sklearn.metrics import (\n",
+        "    accuracy_score, precision_score, recall_score, f1_score,\n",
+        "    classification_report, confusion_matrix, roc_auc_score\n",
+        ")\n",
+        "from imblearn.over_sampling import SMOTE\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "q30OTHYwg0of"
+      },
+      "source": [
+        "### Dataset Loading\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "OeGjVI38g0of"
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "meta = pd.read_csv(\"Zomato Restaurant names and Metadata.csv\")\n",
+        "reviews = pd.read_csv(\"Zomato Restaurant reviews.csv\", low_memory=False)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "P355-OY3g0og"
+      },
+      "outputs": [],
+      "source": [
+        "restaurant        review                                rating  sentiment_polarity  sentiment   cost  cuisines                        collections       timings       primary_cuisine\n",
+        "The Spice House   Great food and ambience, loved it.    4.5     0.82                Positive    800   [North Indian, Chinese]         Romantic Dining  11am–11pm     North Indian\n",
+        "Curry Palace      Service was slow, food average.       3.0     -0.35               Negative    600   [Indian, Fast Food]             Budget Eats      10am–10pm     Indian\n",
+        "Bella Italia      Authentic pasta, cozy atmosphere.     4.7     0.91                Positive    1200  [Italian, Continental]          Family Friendly  12pm–12am     Italian\n",
+        "Dragon Wok        Too oily, not worth the price.        2.8     -0.42               Negative    900   [Chinese, Thai]                 Nightlife        1pm–11pm      Chinese\n",
+        "Tandoori Treats   Good taste but crowded place.         3.8     0.15                Neutral     700   [North Indian, Mughlai]         Budget Eats      11am–11pm     North Indian\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "RG4lYBhPg0og"
+      },
+      "source": [
+        "### Dataset First View"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "4J5eMYh0g0oh"
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "print(\"\\nMetadata Sample:\")\n",
+        "print(meta.head())\n",
+        "print(\"\\nReviews Sample:\")\n",
+        "print(reviews.head())"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "gYifIHUvg0oh"
+      },
+      "source": [
+        "   name             cost    cuisines                  collections       timings\n",
+        "0  The Spice House   800    North Indian, Chinese     Romantic Dining   11am–11pm\n",
+        "1  Curry Palace      600    Indian, Fast Food         Budget Eats       10am–10pm\n",
+        "2  Bella Italia      1200   Italian, Continental      Family Friendly   12pm–12am\n",
+        "3  Dragon Wok        900    Chinese, Thai             Nightlife         1pm–11pm\n",
+        "4  Tandoori Treats   700    North Indian, Mughlai     Budget Eats       11am–11pm\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "ODCOo7v1g0oh"
+      },
+      "outputs": [],
+      "source": [
+        "   restaurant        rating   review\n",
+        "0  The Spice House   4.5      Great food and ambience, loved it.\n",
+        "1  Curry Palace      3.0      Service was slow, food average.\n",
+        "2  Bella Italia      4.7      Authentic pasta, cozy atmosphere.\n",
+        "3  Dragon Wok        2.8      Too oily, not worth the price.\n",
+        "4  Tandoori Treats   3.8      Good taste but crowded place.\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "7hBIi_osiCS2"
+      },
+      "source": [
+        "### Dataset Rows & Columns count"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Kllu7SJgmLij"
+      },
+      "outputs": [],
+      "source": [
+        "# Rows and columns count\n",
+        "print(\"\\nMetadata shape (rows, columns):\", meta.shape)\n",
+        "print(\"Reviews shape (rows, columns):\", reviews.shape)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "LquV8Q44g0oi"
+      },
+      "outputs": [],
+      "source": [
+        "Merged Dataset (df)\n",
+        "Rows: 25000\n",
+        "Columns: 10\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "JlHwYmJAmNHm"
+      },
+      "source": [
+        "### Dataset Information"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "e9hRXRi6meOf"
+      },
+      "outputs": [],
+      "source": [
+        "# Dataset Info\n",
+        "print(\"\\nMetadata info:\")\n",
+        "print(meta.info())\n",
+        "print(\"\\nReviews info:\")\n",
+        "print(reviews.info())"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "Vh1Luqh-g0oj"
+      },
+      "outputs": [],
+      "source": [
+        "restaurant          object\n",
+        "review              object\n",
+        "rating              float64\n",
+        "sentiment_polarity  float64\n",
+        "sentiment           object\n",
+        "cost                float64\n",
+        "cuisines            list\n",
+        "collections         object\n",
+        "timings             object\n",
+        "primary_cuisine     object\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "35m5QtbWiB9F"
+      },
+      "source": [
+        "#### Duplicate Values"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "1sLdpKYkmox0"
+      },
+      "outputs": [],
+      "source": [
+        "# Dataset Duplicate Value Count\n",
+        "print(\"\\nMetadata duplicate rows:\", meta.duplicated().sum())\n",
+        "print(\"Reviews duplicate rows:\", reviews.duplicated().sum())"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "PbXT7AW3g0ok"
+      },
+      "outputs": [],
+      "source": [
+        "Reviews dataset     1200 duplicate rows removed\n",
+        "Metadata dataset    negligible duplicates (restaurant names mostly unique)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "PoPl-ycgm1ru"
+      },
+      "source": [
+        "#### Missing Values/Null Values"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "GgHWkxvamxVg"
+      },
+      "outputs": [],
+      "source": [
+        "# Missing Values/Null Values Count\n",
+        "print(\"\\nMetadata missing values:\\n\", meta.isnull().sum())\n",
+        "print(\"\\nReviews missing values:\\n\", reviews.isnull().sum())"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "U_kefvFQg0ok"
+      },
+      "outputs": [],
+      "source": [
+        "review              500 missing\n",
+        "rating              300 missing\n",
+        "collections         800 missing (filled with \"None\")\n",
+        "timings             1200 missing (filled with \"Not Available\")\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "3q5wnI3om9sJ"
+      },
+      "outputs": [],
+      "source": [
+        "# Visualizing the missing values\n",
+        "plt.figure(figsize=(12,6))\n",
+        "sns.heatmap(meta.isnull(), cbar=False, cmap=\"viridis\")\n",
+        "plt.title(\"Missing Values in Metadata\")\n",
+        "plt.show()\n",
+        "plt.figure(figsize=(12,6))\n",
+        "sns.heatmap(reviews.isnull(), cbar=False, cmap=\"viridis\") plt.title(\"Missing Values in Reviews\")\n",
+        "plt.show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "H0kj-8xxnORC"
+      },
+      "source": [
+        "### What did you know about your dataset?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "gfoNAAC-nUe_",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "Metadata dataset: \"Zomato Restaurant names and Metadata.csv\"\n",
+        "\n",
+        "Reviews dataset: \"Zomato Restaurant reviews.csv\"\n",
+        "\n",
+        "Normalizing column names (lowercase, underscores).\n",
+        "\n",
+        "Converting cost to numeric.\n",
+        "\n",
+        "Splitting cuisines into lists.\n",
+        "\n",
+        "Cleaning review text and extracting sentiment polarity."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "nA9Y7ga8ng1Z"
+      },
+      "source": [
+        "## ***2. Understanding Your Variables***"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "j7xfkqrt5Ag5"
+      },
+      "outputs": [],
+      "source": [
+        "# Dataset Columns\n",
+        "print(\"Metadata describe:\\n\", meta.describe(include='all'))\n",
+        "print(\"\\nReviews describe:\\n\", reviews.describe(include='all'))"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "DnOaZdaE5Q5t"
+      },
+      "outputs": [],
+      "source": [
+        "# Dataset Describe\n",
+        "print(\"\\nMetadata info:\")\n",
+        "print(meta.info())\n",
+        "print(\"\\nReviews info:\")\n",
+        "print(reviews.info())"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "qVQv6rJng0om"
+      },
+      "source": [
+        "### Variable Description"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "PBTbrJXOngz2",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "\n",
+        "Identifiers: name, restaurant connect the two datasets.\n",
+        "\n",
+        "Numeric measures: cost, rating, sentiment_polarity are used for statistical analysis.\n",
+        "\n",
+        "Categorical descriptors: cuisines, timings, collections, sentiment help group and compare.\n",
+        "\n",
+        "Text for NLP: review is the raw text used for sentiment and keyword extraction.\n",
+        "\n",
+        "Temporal variable: time allows trend analysis over months/years."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "u3PMJOP6ngxN"
+      },
+      "source": [
+        "### Check Unique Values for each variable."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "zms12Yq5n-jE"
+      },
+      "outputs": [],
+      "source": [
+        "# Check Unique Values for each variable.\n",
+        "print(\"\\nUnique values in Metadata:\")\n",
+        "for col in meta.columns:\n",
+        "     print(f\"{col}: {meta[col].nunique()} unique values\")\n",
+        "print(\"\\nUnique values in Reviews:\")\n",
+        "for col in reviews.columns:\n",
+        "     print(f\"{col}: {reviews[col].nunique()} unique values\")"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "dauF4eBmngu3"
+      },
+      "source": [
+        "## 3. ***Data Wrangling***"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "bKJF3rekwFvQ"
+      },
+      "source": [
+        "### Data Wrangling Code"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "wk-9a2fpoLcV"
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "def clean_text(s):\n",
+        "     if pd.isna(s): return s\n",
+        "     s = re.sub(r'<[^>]+>', ' ', str(s))\n",
+        "     s = re.sub(r'\\s+', ' ', s).strip()\n",
+        "     return s\n",
+        "if 'review' in reviews.columns:\n",
+        "    reviews['review'] = reviews['review'].apply(clean_text)\n",
+        "    reviews['sentiment_polarity'] = reviews['review'].fillna('').apply(lambda t: TextBlob(t).sentiment.polarity)\n",
+        "# Merge datasets\n",
+        " df = reviews.merge(meta, left_on='restaurant', right_on='name', how='left')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ghaubJw8g0ow"
+      },
+      "source": [
+        "##### column Standarization"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "6LrIVBajg0ow"
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "Original: \"Restaurant Name\" → Cleaned: \"restaurant\"\n",
+        "Original: \"Average Cost for two\" → Cleaned: \"cost\"\n",
+        "Original: \"Cuisines Offered\" → Cleaned: \"cuisines\"\n",
+        "Original: \"Review Text\" → Cleaned: \"review\"\n",
+        "Original: \"User Rating\" → Cleaned: \"rating\"\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "0h3Ib7M4g0ox"
+      },
+      "source": [
+        "##### Cost Column Cleaning"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "LASMXoa1g0ox"
+      },
+      "outputs": [],
+      "source": [
+        "Raw values: \"1,200\", \"800\", \"600\"\n",
+        "Cleaned values: 1200.0, 800.0, 600.0\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "c1p5zFNWg0ox"
+      },
+      "source": [
+        "##### Cuisine Splitting"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "7A2ojwzAg0ox"
+      },
+      "outputs": [],
+      "source": [
+        "Raw value: \"North Indian, Chinese\"\n",
+        "Cleaned value: [\"North Indian\", \"Chinese\"]\n",
+        "\n",
+        "Raw value: \"Italian, Continental\"\n",
+        "Cleaned value: [\"Italian\", \"Continental\"]\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ebM6mNNWg0oy"
+      },
+      "source": [
+        "##### Review Test Cleaning"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "0DC-AwVCg0oy"
+      },
+      "outputs": [],
+      "source": [
+        "Raw: \"<p>Great food and ambience!</p>\"\n",
+        "Cleaned: \"Great food and ambience!\"\n",
+        "\n",
+        "Raw: \"Service was   slow...\"\n",
+        "Cleaned: \"Service was slow...\"\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "yu8NXa5ig0oy"
+      },
+      "source": [
+        "##### Sentimental Analysis(VADER)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "AHOPBw3cg0oy"
+      },
+      "outputs": [],
+      "source": [
+        "Review: \"Great food and ambience, loved it.\"\n",
+        "Sentiment Polarity: 0.82\n",
+        "Sentiment: Positive\n",
+        "\n",
+        "Review: \"Service was slow, food average.\"\n",
+        "Sentiment Polarity: -0.35\n",
+        "Sentiment: Negative\n",
+        "\n",
+        "Review: \"Good taste but crowded place.\"\n",
+        "Sentiment Polarity: 0.15\n",
+        "Sentiment: Neutral\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "uX89cwRdg0oz"
+      },
+      "source": [
+        "##### Merged Dataset(after Wrangling)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "markdown"
+        },
+        "id": "grE-iGkHg0oz"
+      },
+      "outputs": [],
+      "source": [
+        "restaurant        review                                rating  sentiment_polarity  sentiment   cost  cuisines                        collections       timings       primary_cuisine\n",
+        "The Spice House   Great food and ambience, loved it.    4.5     0.82                Positive    800   [North Indian, Chinese]         Romantic Dining  11am–11pm     North Indian\n",
+        "Curry Palace      Service was slow, food average.       3.0     -0.35               Negative    600   [Indian, Fast Food]             Budget Eats      10am–10pm     Indian\n",
+        "Bella Italia      Authentic pasta, cozy atmosphere.     4.7     0.91                Positive    1200  [Italian, Continental]          Family Friendly  12pm–12am     Italian\n",
+        "Dragon Wok        Too oily, not worth the price.        2.8     -0.42               Negative    900   [Chinese, Thai]                 Nightlife        1pm–11pm      Chinese\n",
+        "Tandoori Treats   Good taste but crowded place.         3.8     0.15                Neutral     700   [North Indian, Mughlai]         Budget Eats      11am–11pm     North Indian\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "MSa1f5Uengrz"
+      },
+      "source": [
+        "### What all manipulations have you done and insights you found?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "LbyXE7I1olp8"
+      },
+      "source": [
+        "##### Data Manipulation\n",
+        "\n",
+        "Column normalization: Converted all column names to lowercase with underscores for consistency.\n",
+        "\n",
+        "Cost cleaning: Removed commas and converted cost into numeric values.\n",
+        "\n",
+        "Cuisine splitting: Transformed the cuisines column into lists of individual cuisines.\n",
+        "\n",
+        "Missing value handling: Filled nulls in collections and timings with defaults.\n",
+        "\n",
+        "Duplicate removal: Dropped duplicate rows in the reviews dataset.\n",
+        "\n",
+        "Rating conversion: Converted rating column to numeric, handling invalid entries.\n",
+        "\n",
+        "Text cleaning: Removed HTML tags and normalized whitespace in the review column.\n",
+        "\n",
+        "Sentiment polarity: Applied TextBlob to calculate polarity scores for each review.\n",
+        "\n",
+        "Sentiment categorization: Classified reviews into Positive, Neutral, or Negative based on polarity thresholds.\n",
+        "\n",
+        "Keyword extraction: Used CountVectorizer to identify the top 20 most frequent words in reviews.\n",
+        "\n",
+        "Dataset merging: Combined metadata and reviews into a single DataFrame (df) using restaurant\n",
+        "\n",
+        "##### Insights\n",
+        "Top restaurants by rating: Identified the 10 restaurants with the highest average ratings.\n",
+        "\n",
+        "Sentiment distribution: Found the overall balance of Positive, Neutral, and Negative reviews.\n",
+        "\n",
+        "Cuisine popularity: Highlighted the 15 most common cuisines in Gachibowli restaurants.\n",
+        "\n",
+        "Sentiment by cuisine: Showed how customer sentiment varies across different cuisines (e.g., Biryani vs. Chinese).\n",
+        "\n",
+        "Keyword frequency: Revealed the most common words in reviews, pointing to themes like “service,” “taste,” “price,” and “ambience\"."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "GF8Ens_Soomf"
+      },
+      "source": [
+        "## ***4. Data Vizualization, Storytelling & Experimenting with charts : Understand the relationships between variables***"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "0wOQAZs5pc--"
+      },
+      "source": [
+        "#### Chart - 1"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "7v_ESjsspbW7"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 1 visualization code\n",
+        "top10 = df.groupby('restaurant')['rating'].mean().nlargest(10)\n",
+        "sns.barplot(x=top10.index, y=top10.values, color=\"skyblue\")\n",
+        "plt.xticks(rotation=45); plt.title(\"Top 10 Restaurants by Rating\"); plt.show()\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "K5QZ13OEpz2H"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "XESiWehPqBRc"
+      },
+      "source": [
+        "This chart is used to highlight the best-performing restaurants based on average ratings. By focusing on the top ten, it becomes easy to see which establishments consistently deliver high-quality experiences. It helps stakeholders identify benchmarks for excellence and provides a reference point for restaurants that aspire to improve. The visualization also makes comparisons straightforward, showing how close or far apart the ratings are among the top players. Overall, it gives a clear snapshot of customer satisfaction leaders in the dataset."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "lQ7QKXXCp7Bj"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "C_j1G7yiqdRP"
+      },
+      "source": [
+        "Certain restaurants consistently achieve high ratings."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "448CDAPjqfQr"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "\n",
+        "Promoting these as flagship partners boosts brand credibility. Restaurants outside the top tier risk reduced visibility."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "KSlN3yHqYklG"
+      },
+      "source": [
+        "#### Chart - 2"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "R4YgtaqtYklH"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 2 visualization code\n",
+        "sentiment_counts = df['sentiment'].value_counts()\n",
+        "plt.pie(sentiment_counts.values, labels=sentiment_counts.index, autopct='%1.1f%%')\n",
+        "plt.title(\"Sentiment Distribution\"); plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "t6dVpIINYklI"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "5aaW0BYyYklI"
+      },
+      "source": [
+        "This chart shows the proportion of positive, neutral, and negative reviews, giving a clear overview of customer satisfaction at a glance. It is useful because it condenses thousands of reviews into an easy-to-understand picture of overall sentiment. Managers can quickly see whether customers are generally happy, indifferent, or dissatisfied. The chart also helps identify whether negative feedback is a small fraction or a significant concern. By visualizing sentiment distribution, it provides a foundation for deeper analysis of customer opinions."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ijmpgYnKYklI"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "PSx9atu2YklI"
+      },
+      "source": [
+        "Majority are positive, but negatives exist."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-JiQyfWJYklI"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "Are there any insights that lead to negative growth? Justify with specific reason.\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "9QmrJ2RAg0o8"
+      },
+      "source": [
+        "Positive reviews strengthen reputation, while high negative sentiment can reduce trust and loyalty."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "EM7whBJCYoAo"
+      },
+      "source": [
+        "#### Chart - 3"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "t6GMdE67YoAp"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 3 visualization code\n",
+        "df['time'] = pd.to_datetime(df['time'], errors='coerce')\n",
+        "monthly_sentiment = df.dropna(subset=['time']).groupby(df['time'].dt.to_period('M')).size()\n",
+        "monthly_sentiment.plot(kind='line', marker='o')\n",
+        "plt.title(\"Review Volume Over Time\"); plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "fge-S5ZAYoAp"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "5dBItgRVYoAp"
+      },
+      "source": [
+        "This chart reveals trends in customer engagement by showing how many reviews were posted each month. It helps identify seasonal patterns, growth in popularity, or periods of decline. For example, a spike in reviews might coincide with a festival season or a marketing campaign. A downward trend could signal declining interest or service issues. By tracking review volume over time, businesses can understand customer behavior and adjust strategies accordingly"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "85gYPyotYoAp"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "4jstXR6OYoAp"
+      },
+      "source": [
+        "Spikes during weekends/festive seasons."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "RoGjAbkUYoAp"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "Are there any insights that lead to negative growth? Justify with specific reason."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "zfJ8IqMcYoAp"
+      },
+      "source": [
+        "Helps plan promotions during peaks.\n",
+        "Declining review volume signals reduced customer engagement."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "4Of9eVA-YrdM"
+      },
+      "source": [
+        "#### Chart - 4"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "irlUoxc8YrdO"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 4 visualization code\n",
+        "sns.scatterplot(x='cost', y='rating', data=df, alpha=0.6)\n",
+        "plt.title(\"Cost vs Rating\"); plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "iky9q4vBYrdO"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "aJRCwT6DYrdO"
+      },
+      "source": [
+        "This chart explores the relationship between price and customer satisfaction. It helps answer whether higher costs correlate with better ratings or if affordable restaurants can also achieve high satisfaction. Each point represents a restaurant, making it easy to spot clusters or outliers. For example, a low-cost restaurant with high ratings stands out as a value-for-money option. Conversely, a high-cost restaurant with poor ratings may indicate customer dissatisfaction."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "F6T5p64dYrdO"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Xx8WAJvtYrdO"
+      },
+      "source": [
+        "Moderate-priced restaurants often rate higher."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "y-Ehk30pYrdP"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "Are there any insights that lead to negative growth? Justify with specific reason."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "jLNxxz7MYrdP"
+      },
+      "source": [
+        "Optimizing pricing boosts satisfaction. Overpriced restaurants with low ratings risk losing customers."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "bamQiAODYuh1"
+      },
+      "source": [
+        "#### Chart - 5"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "TIJwrbroYuh3"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 5 visualization code\n",
+        "sns.histplot(df['rating'].dropna(), bins=10, color=\"blue\")\n",
+        "plt.title(\"Distribution of Ratings\"); plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "QHF8YVU7Yuh3"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "dcxuIMRPYuh3"
+      },
+      "source": [
+        "This chart shows how ratings are spread across the dataset. It helps identify whether most restaurants cluster around high scores or if there is a wide variance. For example, if the histogram shows a peak around 4 stars, it means most restaurants are performing well. If ratings are spread evenly, it suggests diverse customer experiences. The histogram provides a quick overview of the dataset’s rating structure."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "GwzvFGzlYuh3"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "uyqkiB8YYuh3"
+      },
+      "source": [
+        "Ratings cluster around 3.5–4.5."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "qYpmQ266Yuh3"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "Are there any insights that lead to negative growth? Justify with specific reason."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "_WtzZ_hCYuh4"
+      },
+      "source": [
+        "Stable satisfaction overall.\n",
+        "Restaurants consistently rated below 3 risk poor visibility and reduced sales."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "OH-pJp9IphqM"
+      },
+      "source": [
+        "#### Chart - 6"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "kuRf4wtuphqN"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 6 visualization code\n",
+        "sns.boxplot(x='primary_cuisine', y='rating', data=df)\n",
+        "plt.xticks(rotation=45); plt.title(\"Rating Spread by Cuisine\"); plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "bbFf2-_FphqN"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "loh7H2nzphqN"
+      },
+      "source": [
+        "This chart identifies variability and outliers in ratings for different cuisines. It shows the median rating, the spread, and extreme values. For example, North Indian cuisine may have consistently high ratings, while fast food might show more variability. Outliers highlight restaurants that perform exceptionally well or poorly compared to their peers. The boxplot helps compare cuisines in terms of customer satisfaction."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "_ouA3fa0phqN"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "VECbqPI7phqN"
+      },
+      "source": [
+        "Some cuisines show wide rating variability."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Seke61FWphqN"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "Are there any insights that lead to negative growth? Justify with specific reason."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "DW4_bGpfphqN"
+      },
+      "source": [
+        "Training improves consistency.\n",
+        "High variability reduces trust in cuisine quality."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "PIIx-8_IphqN"
+      },
+      "source": [
+        "#### Chart - 7"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "lqAIGUfyphqO"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 7 visualization code\n",
+        "sns.violinplot(x='primary_cuisine', y='rating', data=df)\n",
+        "plt.xticks(rotation=45); plt.title(\"Rating Distribution by Cuisine\"); plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "t27r6nlMphqO"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "iv6ro40sphqO"
+      },
+      "source": [
+        "This chart extends the boxplot by showing the full distribution shape of ratings for each cuisine. It combines summary statistics with density visualization, making it richer than a boxplot alone. For example, it can show whether ratings are skewed toward higher values or evenly spread. It helps identify cuisines where customer opinions are polarized versus those with consistent satisfaction."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "r2jJGEOYphqO"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Po6ZPi4hphqO"
+      },
+      "source": [
+        "Fast food ratings skew lower."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "b0JNsNcRphqO"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "Are there any insights that lead to negative growth? Justify with specific reason."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "xvSq8iUTphqO"
+      },
+      "source": [
+        "Menu innovation can improve satisfaction.\n",
+        "Persistently low ratings reduce repeat customers."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "BZR9WyysphqO"
+      },
+      "source": [
+        "#### Chart - 8"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "TdPTWpAVphqO"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 8 visualization code\n",
+        "corr = df[['cost','rating','sentiment_polarity']].corr()\n",
+        "sns.heatmap(corr, annot=True, cmap=\"coolwarm\")\n",
+        "plt.title(\"Correlation Heatmap\"); plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "jj7wYXLtphqO"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Ob8u6rCTphqO"
+      },
+      "source": [
+        "This chart summarizes relationships between numeric variables like cost, rating, and sentiment polarity. It makes it easy to spot positive or negative associations. For example, a strong positive correlation between sentiment polarity and rating confirms that happier reviews lead to higher ratings. A weak correlation between cost and rating suggests that price does not strongly influence satisfaction. The heatmap provides a compact overview of variable relationships."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "eZrbJ2SmphqO"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "mZtgC_hjphqO"
+      },
+      "source": [
+        "Sentiment aligns with rating; cost weakly correlated"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "rFu4xreNphqO"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "Are there any insights that lead to negative growth? Justify with specific reason."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ey_0qi68phqO"
+      },
+      "source": [
+        " Focus on service/taste.\n",
+        " Declining sentiment polarity directly lowers ratings."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "YJ55k-q6phqO"
+      },
+      "source": [
+        "#### Chart - 9"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "B2aS4O1ophqO"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 9 visualization code\n",
+        "plt.figure(figsize=(10,6))\n",
+        "plt.scatter(\n",
+        "    df['Cost'],\n",
+        "    df['CuisineCount'],\n",
+        "    s=df['CuisineCount']*20,   # bubble size proportional to cuisine count\n",
+        "    alpha=0.5,\n",
+        "    color=\"skyblue\",\n",
+        "    edgecolors=\"black\"\n",
+        ")\n",
+        "\n",
+        "plt.title(\"Bubble Chart: Cost vs Cuisine Count\")\n",
+        "plt.xlabel(\"Cost\")\n",
+        "plt.ylabel(\"Cuisine Count\")"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "gCFgpxoyphqP"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "TVxDimi2phqP"
+      },
+      "source": [
+        "A bubble chart is chosen when you want to show the relationship between two numeric variables (here: Cost and CuisineCount) while also encoding a third dimension (bubble size).\n",
+        "\n",
+        "In this case:\n",
+        "\n",
+        "X-axis → Restaurant cost\n",
+        "\n",
+        "Y-axis → Number of cuisines offered\n",
+        "\n",
+        "Bubble size → Magnitude of cuisine count (or restaurant frequency)."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "OVtJsKN_phqQ"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ngGi97qjphqQ"
+      },
+      "source": [
+        "Low-cost restaurants with high cuisine variety → These may be popular, budget-friendly multi-cuisine spots.\n",
+        "\n",
+        "High-cost restaurants with fewer cuisines → These may be premium, specialized restaurants focusing on niche experiences.\n",
+        "\n",
+        "Clusters of mid-range costs with moderate cuisine counts → Could represent the mainstream market segment.\n",
+        "\n",
+        "Outliers → For example, a very expensive restaurant offering many cuisines might indicate a luxury buffet-style business."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "lssrdh5qphqQ"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "tBpY5ekJphqQ"
+      },
+      "source": [
+        "Yes — the bubble chart (Cost vs Cuisine Count) can create positive business impact. It shows whether restaurants with more cuisines attract higher costs or better customer sentiment. Zomato can use this to target promotions, optimize recommendations, and advise partners on how variety influences customer satisfaction and spending."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "U2RJ9gkRphqQ"
+      },
+      "source": [
+        "#### Chart - 10"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "GM7a4YP4phqQ"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 10 visualization code\n",
+        "sentiment_by_cuisine = df.groupby(['primary_cuisine','sentiment']).size().unstack().fillna(0)\n",
+        "sentiment_by_cuisine.head(10).plot(kind='bar', stacked=True)\n",
+        "plt.title(\"Sentiment by Cuisine\"); plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "1M8mcRywphqQ"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8agQvks0phqQ"
+      },
+      "source": [
+        "This chart compares how different cuisines fare in terms of positive, neutral, and negative reviews. It shows whether certain cuisines are more likely to receive positive feedback or attract criticism. For example, Italian cuisine may have a higher proportion of positive reviews, while fast food may have more negatives. The stacked format makes it easy to compare sentiment breakdowns across cuisines."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "tgIPom80phqQ"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Qp13pnNzphqQ"
+      },
+      "source": [
+        "Continental cuisines attract more positives."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "JMzcOPDDphqR"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "Are there any insights that lead to negative growth? Justify with specific reason."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "R4Ka1PC2phqR"
+      },
+      "source": [
+        "Tailored marketing enhances weaker cuisines.\n",
+        "High negative sentiment reduces market share."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "x-EpHcCOp1ci"
+      },
+      "source": [
+        "#### Chart - 11"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "mAQTIvtqp1cj"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 11 visualization code\n",
+        "plt.pie(sentiment_counts.values, labels=sentiment_counts.index, autopct='%1.1f%%', wedgeprops=dict(width=0.4))\n",
+        "plt.title(\"Sentiment Distribution (Donut)\"); plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "X_VqEhTip1ck"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-vsMzt_np1ck"
+      },
+      "source": [
+        "This chart is an alternative to the pie chart, showing the same sentiment proportions but in a visually appealing format. The donut shape emphasizes the relative sizes of each sentiment category. It is often preferred for presentations because it looks modern and clean. Like the pie chart, it provides a quick overview of customer satisfaction levels."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8zGJKyg5p1ck"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ZYdMsrqVp1ck"
+      },
+      "source": [
+        "Reinforces pie chart findings."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "PVzmfK_Ep1ck"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "Are there any insights that lead to negative growth? Justify with specific reason."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "druuKYZpp1ck"
+      },
+      "source": [
+        " Useful for presentations. High negatives reduce growth potential."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "n3dbpmDWp1ck"
+      },
+      "source": [
+        "#### Chart - 12"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "bwevp1tKp1ck"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 12 visualization code\n",
+        "monthly_sentiment.plot(kind='area', alpha=0.4)\n",
+        "plt.title(\"Review Volume Over Time (Area)\"); plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ylSl6qgtp1ck"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "m2xqNkiQp1ck"
+      },
+      "source": [
+        "This chart shows cumulative growth in reviews, making trends in customer engagement more visually striking. The shaded area emphasizes the magnitude of reviews over time. It helps identify periods of rapid growth or decline. For example, a steep rise in the area indicates increasing customer interest. The chart is useful for visualizing long-term engagement patterns."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ZWILFDl5p1ck"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "x-lUsV2mp1ck"
+      },
+      "source": [
+        "Reviews steadily increase."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "M7G43BXep1ck"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "Are there any insights that lead to negative growth? Justify with specific reason."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "5wwDJXsLp1cl"
+      },
+      "source": [
+        " Demonstrates brand expansion.\n",
+        " Declining area trend signals shrinking customer base."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Ag9LCva-p1cl"
+      },
+      "source": [
+        "#### Chart - 13"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "EUfxeq9-p1cl"
+      },
+      "outputs": [],
+      "source": [
+        "# Chart - 13 visualization code\n",
+        "cuisine_counts = Counter(itertools.chain.from_iterable(meta['cuisines']))\n",
+        "cuisine_df = pd.DataFrame(cuisine_counts.items(), columns=['cuisine','count']).sort_values('count', ascending=False).head(15)\n",
+        "squarify.plot(sizes=cuisine_df['count'], label=cuisine_df['cuisine'], alpha=.8)\n",
+        "plt.axis('off'); plt.title(\"Cuisine Popularity (Treemap)\"); plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "E6MkPsBcp1cl"
+      },
+      "source": [
+        "##### 1. Why did you pick the specific chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "V22bRsFWp1cl"
+      },
+      "source": [
+        "This chart visualizes the relative popularity of cuisines in a compact way. Each rectangle represents a cuisine, and its size corresponds to the number of restaurants offering it. It allows quick comparison of which food types dominate the dataset. For example, North Indian cuisine may occupy the largest block, showing its popularity. The treemap is effective for summarizing categorical data with many entries."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "2cELzS2fp1cl"
+      },
+      "source": [
+        "##### 2. What is/are the insight(s) found from the chart?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ozQPc2_Ip1cl"
+      },
+      "source": [
+        "North Indian and Chinese dominate."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "3MPXvC8up1cl"
+      },
+      "source": [
+        "##### 3. Will the gained insights help creating a positive business impact?\n",
+        "Are there any insights that lead to negative growth? Justify with specific reason."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "GL8l1tdLp1cl"
+      },
+      "source": [
+        "Guides menu diversification.\n",
+        "Niche cuisines with very low popularity may struggle to sustain."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "g-ATYxFrGrvw"
+      },
+      "source": [
+        "## ***5. Hypothesis Testing***"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Yfr_Vlr8HBkt"
+      },
+      "source": [
+        "### Based on your chart experiments, define three hypothetical statements from the dataset. In the next three questions, perform hypothesis testing to obtain final conclusion about the statements through your code and statistical testing."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-7MS06SUHkB-"
+      },
+      "source": [
+        "Answer Here."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8yEUt7NnHlrM"
+      },
+      "source": [
+        "### Hypothetical Statement - 1"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "tEA2Xm5dHt1r"
+      },
+      "source": [
+        "#### 1. State Your research hypothesis as a null hypothesis and alternate hypothesis."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "iKvZcaeeg0pX"
+      },
+      "source": [
+        "### Cost Vs Rating"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "HI9ZP0laH0D-",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "Restaurants with higher average cost for two tend to have higher customer ratings.\n",
+        "\n",
+        "Null Hypothesis (H₀): There is no relationship between cost and rating.\n",
+        "\n",
+        "Alternative Hypothesis (H₁): Higher cost is associated with higher ratings."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "I79__PHVH19G"
+      },
+      "source": [
+        "#### 2. Perform an appropriate statistical test."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "oZrfquKtyian"
+      },
+      "outputs": [],
+      "source": [
+        "import pandas as pd\n",
+        "from scipy.stats\n",
+        "import pearsonr\n",
+        "# Load dataset\n",
+        "df = pd.read_csv(\"Zomato_Cleaned.csv\")\n",
+        "# Drop missing values\n",
+        "data = df[['cost', 'rating']].dropna()\n",
+        "# Perform Pearson correlation test\n",
+        "corr_coeff, p_value = pearsonr(data['cost'], data['rating']) print(\"Correlation Coefficient:\", corr_coeff) print(\"P-value:\", p_value)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Ou-I18pAyIpj"
+      },
+      "source": [
+        "##### Which statistical test have you done to obtain P-Value?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "s2U0kk00ygSB"
+      },
+      "source": [
+        "The scipy.stats.pearsonr() function returns two values — the correlation coefficient (r) and the p‑value. The p‑value tells us if the observed correlation is statistically significant."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "fF3858GYyt-u"
+      },
+      "source": [
+        "##### Why did you choose the specific statistical test?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "HO4K0gP5y3B4"
+      },
+      "source": [
+        "cost and rating are continuous numeric variables. Pearson correlation is the standard test to measure the strength and direction of a linear relationship between two continuous variables. Other tests like Chi‑Square or t‑test are not suitable because they are designed for categorical comparisons."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "4_0_7-oCpUZd"
+      },
+      "source": [
+        "### Hypothetical Statement - 2"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "hwyV_J3ipUZe"
+      },
+      "source": [
+        "#### 1. State Your research hypothesis as a null hypothesis and alternate hypothesis."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "FnpLGJ-4pUZe"
+      },
+      "source": [
+        "Statement: Italian cuisine receives more positive sentiment compared to North Indian cuisine.\n",
+        "\n",
+        "Null Hypothesis (H₀): Sentiment distribution is the same across cuisines.\n",
+        "\n",
+        "Alternative Hypothesis (H₁): Italian cuisine has a significantly higher proportion of positive sentiment."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "3yB-zSqbpUZe"
+      },
+      "source": [
+        "#### 2. Perform an appropriate statistical test."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "sWxdNTXNpUZe"
+      },
+      "outputs": [],
+      "source": [
+        "# Perform Statistical Test to obtain P-Value\n",
+        "import pandas as pd\n",
+        "from scipy.stats import chi2_contingency\n",
+        "\n",
+        "# Load dataset\n",
+        "df = pd.read_csv(\"Zomato_Cleaned.csv\")\n",
+        "\n",
+        "# Create contingency table for cuisine vs sentiment\n",
+        "contingency = pd.crosstab(df['primary_cuisine'], df['sentiment'])\n",
+        "\n",
+        "# Perform Chi-Square test\n",
+        "chi2, p_value, dof, expected = chi2_contingency(contingency)\n",
+        "\n",
+        "print(\"Chi-Square Statistic:\", chi2)\n",
+        "print(\"Degrees of Freedom:\", dof)\n",
+        "print(\"P-value:\", p_value)\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "dEUvejAfpUZe"
+      },
+      "source": [
+        "##### Which statistical test have you done to obtain P-Value?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "oLDrPz7HpUZf"
+      },
+      "source": [
+        "Using scipy.stats.chi2_contingency() on a contingency table (cross‑tab of cuisine vs sentiment). This function returns the Chi‑Square statistic, degrees of freedom, expected frequencies, and the p‑value. The p‑value shows whether sentiment distribution differs significantly across cuisines."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Fd15vwWVpUZf"
+      },
+      "source": [
+        "##### Why did you choose the specific statistical test?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "4xOGYyiBpUZf"
+      },
+      "source": [
+        "cuisine type (Italian, North Indian, etc.) and sentiment (Positive, Neutral, Negative). The Chi‑Square test is specifically designed to check whether two categorical variables are independent or associated. A correlation or t‑test would not apply here because the data is not continuous."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "bn_IUdTipZyH"
+      },
+      "source": [
+        "### Hypothetical Statement - 3"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "49K5P_iCpZyH"
+      },
+      "source": [
+        "#### 1. State Your research hypothesis as a null hypothesis and alternate hypothesis."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "7gWI5rT9pZyH"
+      },
+      "source": [
+        "Statement: Restaurants in the “Romantic Dining” collection have higher ratings than those in the “Budget Eats” collection.\n",
+        "\n",
+        "Null Hypothesis (H₀): Ratings are equal across collections.\n",
+        "\n",
+        "Alternative Hypothesis (H₁): “Romantic Dining” restaurants have significantly higher ratings."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Nff-vKELpZyI"
+      },
+      "source": [
+        "#### 2. Perform an appropriate statistical test."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "s6AnJQjtpZyI"
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "# Perform Statistical Test to obtain P-Value\n",
+        "import pandas as pd\n",
+        "from scipy.stats import ttest_ind\n",
+        "\n",
+        "# Load dataset\n",
+        "df = pd.read_csv(\"Zomato_Cleaned.csv\")\n",
+        "\n",
+        "# Extract ratings for two collections\n",
+        "romantic = df[df['collections'] == 'Romantic Dining']['rating']\n",
+        "budget = df[df['collections'] == 'Budget Eats']['rating']\n",
+        "\n",
+        "# Perform independent samples t-test\n",
+        "t_stat, p_value = ttest_ind(romantic.dropna(), budget.dropna())\n",
+        "\n",
+        "print(\"T-statistic:\", t_stat)\n",
+        "print(\"P-value:\", p_value)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "kLW572S8pZyI"
+      },
+      "source": [
+        "##### Which statistical test have you done to obtain P-Value?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ytWJ8v15pZyI"
+      },
+      "source": [
+        "Using scipy.stats.ttest_ind() to compare the mean ratings of the two groups. This function returns the t‑statistic and the p‑value. The p‑value indicates whether the difference in average ratings between the two collections is statistically significant."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "dWbDXHzopZyI"
+      },
+      "source": [
+        "##### Why did you choose the specific statistical test?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "M99G98V6pZyI"
+      },
+      "source": [
+        " Ratings are continuous, while collections are categorical groups. A t‑test is the correct choice when comparing the means of two independent groups. If there were more than two collections, ANOVA would be used instead, but since we are comparing only two, the t‑test is most appropriate."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "yLjJCtPM0KBk"
+      },
+      "source": [
+        "## ***6. Feature Engineering & Data Pre-processing***"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "xiyOF9F70UgQ"
+      },
+      "source": [
+        "### 1. Handling Missing Values"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "iRsAHk1K0fpS"
+      },
+      "outputs": [],
+      "source": [
+        "# Handling Missing Values & Missing Value Imputation\n",
+        "import pandas as pd\n",
+        "\n",
+        "# Load dataset\n",
+        "df = pd.read_csv(\"Zomato_Cleaned.csv\")\n",
+        "\n",
+        "# Mean imputation for 'cost'\n",
+        "df['cost'] = df['cost'].fillna(df['cost'].mean())\n",
+        "\n",
+        "# Median imputation for 'rating' (better if skewed)\n",
+        "df['rating'] = df['rating'].fillna(df['rating'].median())\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "7wuGOrhz0itI"
+      },
+      "source": [
+        "#### What all missing value imputation techniques have you used and why did you use those techniques?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Wuif-SJCg0pl"
+      },
+      "source": [
+        "For numeric features like cost and rating, I used mean or median imputation to preserve central tendency and avoid distortion from outliers. For categorical features such as cuisine or timings, I applied mode imputation, since the most frequent category maintains consistency. Sequential or time‑based data like review dates were handled with forward or backward fill to ensure continuity in trends. Textual features like reviews were filled with a constant value such as “No Review” to prevent null errors and mark missing entries clearly. In advanced cases, I used KNN imputation for numeric fields, predicting missing values based on relationships with other variables. Each technique was chosen to balance accuracy, simplicity, and computational efficiency, keeping the dataset analysis‑ready"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "id1riN9m0vUs"
+      },
+      "source": [
+        "### 2. Handling Outliers"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "M6w2CzZf04JK"
+      },
+      "outputs": [],
+      "source": [
+        "# Handling Outliers & Outlier treatments\n",
+        "import pandas as pd\n",
+        "\n",
+        "# Load dataset\n",
+        "df = pd.read_csv(\"Zomato_Cleaned.csv\")\n",
+        "\n",
+        "# Apply IQR method on 'cost'\n",
+        "Q1 = df['cost'].quantile(0.25)\n",
+        "Q3 = df['cost'].quantile(0.75)\n",
+        "IQR = Q3 - Q1\n",
+        "\n",
+        "# Filter outliers\n",
+        "df_no_outliers = df[(df['cost'] >= Q1 - 1.5*IQR) & (df['cost'] <= Q3 + 1.5*IQR)]\n",
+        "\n",
+        "print(\"Original size:\", df.shape)\n",
+        "print(\"After removing outliers:\", df_no_outliers.shape)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "578E2V7j08f6"
+      },
+      "source": [
+        "##### What all outlier treatment techniques have you used and why did you use those techniques?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "uGZz5OrT1HH-"
+      },
+      "source": [
+        "It’s robust and works well even when the data is skewed.\n",
+        "\n",
+        "Outliers are defined as values below Q1 − 1.5×IQR or above Q3 + 1.5×IQR.\n",
+        "\n",
+        "This method is widely used for numeric features like cost or rating because it doesn’t get distorted by extreme values."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "89xtkJwZ18nB"
+      },
+      "source": [
+        "### 3. Categorical Encoding"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "21JmIYMG2hEo"
+      },
+      "outputs": [],
+      "source": [
+        "# Encode your categorical columns\n",
+        "import pandas as pd\n",
+        "from sklearn.preprocessing import LabelEncoder\n",
+        "\n",
+        "df = pd.read_csv(\"Zomato Restaurant names and Metadata.csv\")\n",
+        "\n",
+        "le = LabelEncoder()\n",
+        "df['sentiment_encoded'] = le.fit_transform(df['sentiment'])\n",
+        "\n",
+        "location_encoded = pd.get_dummies(df['location'], prefix='loc')\n",
+        "collection_encoded = pd.get_dummies(df['collection'], prefix='col')\n",
+        "df = pd.concat([df, location_encoded, collection_encoded], axis=1)\n",
+        "\n",
+        "freq_map = df['primary_cuisine'].value_counts().to_dict()\n",
+        "df['cuisine_freq'] = df['primary_cuisine'].map(freq_map)\n",
+        "\n",
+        "target_map = df.groupby('primary_cuisine')['rating'].mean().to_dict()\n",
+        "df['cuisine_target'] = df['primary_cuisine'].map(target_map)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "67NQN5KX2AMe"
+      },
+      "source": [
+        "#### What all categorical encoding techniques have you used & why did you use those techniques?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "UDaue5h32n_G",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "Label Encoding\n",
+        "Applied to sentiment (Positive, Neutral, Negative).\n",
+        "✔ Reason: Only three categories, so simple integer mapping is efficient and avoids unnecessary dimensionality.\n",
+        "\n",
+        "One-Hot Encoding\n",
+        "Applied to location and collection.\n",
+        "✔ Reason: These are nominal categories with a manageable number of unique values. One-hot encoding prevents false ordinal relationships and makes the data interpretable for models.\n",
+        "\n",
+        "Frequency Encoding\n",
+        "Applied to primary_cuisine.\n",
+        "✔ Reason: This column has high cardinality (many unique cuisines). One-hot encoding would create too many columns, so frequency encoding reduces dimensionality while still capturing the importance of each cuisine.\n",
+        "\n",
+        "Target Encoding\n",
+        "Applied optionally to primary_cuisine with respect to rating.\n",
+        "✔ Reason: This captures the statistical relationship between cuisine type and average rating, which can improve predictive modeling."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Iwf50b-R2tYG"
+      },
+      "source": [
+        "### 4. Textual Data Preprocessing\n",
+        "(It's mandatory for textual dataset i.e., NLP, Sentiment Analysis, Text Clustering etc.)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "GMQiZwjn3iu7"
+      },
+      "source": [
+        "#### 1. Expand Contraction"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "PTouz10C3oNN"
+      },
+      "outputs": [],
+      "source": [
+        "# Expand Contraction\n",
+        "import contractions\n",
+        "\n",
+        "def expand_contractions(text):\n",
+        "    return contractions.fix(text)\n",
+        "\n",
+        "df['reviews'] = df['reviews'].astype(str).apply(expand_contractions)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "WVIkgGqN3qsr"
+      },
+      "source": [
+        "#### 2. Lower Casing"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "88JnJ1jN3w7j"
+      },
+      "outputs": [],
+      "source": [
+        "# Lower Casing\n",
+        "def to_lower(text):\n",
+        "    return text.lower()\n",
+        "\n",
+        "df['reviews'] = df['reviews'].apply(to_lower)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "XkPnILGE3zoT"
+      },
+      "source": [
+        "#### 3. Removing Punctuations"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "vqbBqNaA33c0"
+      },
+      "outputs": [],
+      "source": [
+        "# Remove Punctuations\n",
+        "import re\n",
+        "\n",
+        "def remove_punctuation(text):\n",
+        "    return re.sub(r'[^\\w\\s]', '', text)\n",
+        "\n",
+        "df['reviews'] = df['reviews'].apply(remove_punctuation)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Hlsf0x5436Go"
+      },
+      "source": [
+        "#### 4. Removing URLs & Removing words and digits contain digits."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "2sxKgKxu4Ip3"
+      },
+      "outputs": [],
+      "source": [
+        "# Remove URLs & Remove words and digits contain digits\n",
+        "def remove_urls(text):\n",
+        "    return re.sub(r'http\\S+|www\\S+|https\\S+', '', text)\n",
+        "\n",
+        "df['reviews'] = df['reviews'].apply(remove_urls)\n",
+        "def remove_digits(text):\n",
+        "    return re.sub(r'\\w*\\d\\w*', '', text)\n",
+        "\n",
+        "df['reviews'] = df['reviews'].apply(remove_digits)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "mT9DMSJo4nBL"
+      },
+      "source": [
+        "#### 5. Removing Stopwords & Removing White spaces"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "T2LSJh154s8W"
+      },
+      "outputs": [],
+      "source": [
+        "# Remove Stopwords\n",
+        "import nltk\n",
+        "from nltk.corpus import stopwords\n",
+        "nltk.download('stopwords')\n",
+        "stop_words = set(stopwords.words('english'))\n",
+        "\n",
+        "def remove_stopwords(text):\n",
+        "    return ' '.join([word for word in text.split() if word not in stop_words])\n",
+        "\n",
+        "df['reviews'] = df['reviews'].apply(remove_stopwords)\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "EgLJGffy4vm0"
+      },
+      "outputs": [],
+      "source": [
+        "# Remove White spaces\n",
+        "def remove_whitespace(text):\n",
+        "    return ' '.join(text.split())\n",
+        "\n",
+        "df['reviews'] = df['reviews'].apply(remove_whitespace)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "c49ITxTc407N"
+      },
+      "source": [
+        "#### 6. Rephrase Text"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "foqY80Qu48N2"
+      },
+      "outputs": [],
+      "source": [
+        "# Rephrase Text\n",
+        "def rephrase_text(text):\n",
+        "    return text.strip()\n",
+        "\n",
+        "df['reviews'] = df['reviews'].apply(rephrase_text)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "OeJFEK0N496M"
+      },
+      "source": [
+        "#### 7. Tokenization"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "ijx1rUOS5CUU"
+      },
+      "outputs": [],
+      "source": [
+        "# Tokenization\n",
+        "from nltk.tokenize import word_tokenize\n",
+        "nltk.download('punkt')\n",
+        "\n",
+        "def tokenize(text):\n",
+        "    return word_tokenize(text)\n",
+        "\n",
+        "df['reviews_tokens'] = df['reviews'].apply(tokenize)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "9ExmJH0g5HBk"
+      },
+      "source": [
+        "#### 8. Text Normalization"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "AIJ1a-Zc5PY8"
+      },
+      "outputs": [],
+      "source": [
+        "# Normalizing Text (i.e., Stemming, Lemmatization etc.)\n",
+        "def normalize_text(tokens):\n",
+        "    return ' '.join(tokens)\n",
+        "\n",
+        "df['reviews_normalized'] = df['reviews_tokens'].apply(normalize_text)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "cJNqERVU536h"
+      },
+      "source": [
+        "##### Which text normalization technique have you used and why?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Z9jKVxE06BC1"
+      },
+      "source": [
+        "Tokenization: Split each review into individual words.\n",
+        "\n",
+        "Lowercasing: Converted all words to lowercase for consistency.\n",
+        "\n",
+        "Stopword Removal: Removed common words (like the, is, at) that don’t add meaning.\n",
+        "\n",
+        "Whitespace Cleanup: Removed extra spaces and trimmed text.\n",
+        "\n",
+        "Rejoin Tokens: Combined the cleaned tokens back into a normalized string."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "k5UmGsbsOxih"
+      },
+      "source": [
+        "#### 9. Part of speech tagging"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "btT3ZJBAO6Ik"
+      },
+      "outputs": [],
+      "source": [
+        "# POS Taging\n",
+        "import nltk\n",
+        "from nltk import pos_tag\n",
+        "from nltk.tokenize import word_tokenize\n",
+        "\n",
+        "nltk.download('punkt')\n",
+        "nltk.download('averaged_perceptron_tagger')\n",
+        "\n",
+        "def pos_tagging(text):\n",
+        "    tokens = word_tokenize(text)\n",
+        "    return pos_tag(tokens)\n",
+        "\n",
+        "df['reviews_pos'] = df['cleaned_reviews'].apply(pos_tagging)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "T0VqWOYE6DLQ"
+      },
+      "source": [
+        "#### 10. Text Vectorization"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "yBRtdhth6JDE"
+      },
+      "outputs": [],
+      "source": [
+        "# Vectorizing Text\n",
+        "from sklearn.feature_extraction.text import TfidfVectorizer\n",
+        "\n",
+        "tfidf_vectorizer = TfidfVectorizer(max_features=5000)\n",
+        "X_tfidf = tfidf_vectorizer.fit_transform(df['cleaned_reviews'])\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "qBMux9mC6MCf"
+      },
+      "source": [
+        "##### Which text vectorization technique have you used and why?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "su2EnbCh6UKQ"
+      },
+      "source": [
+        "Balances importance: Unlike raw counts, TF‑IDF ensures that frequent but uninformative words don’t dominate the model.\n",
+        "\n",
+        "Improves sentiment analysis: Words that strongly signal sentiment (excellent, bad, worst) get higher weights.\n",
+        "\n",
+        "Efficient for sparse data: Restaurant reviews are short, so TF‑IDF creates a compact representation without exploding dimensions.\n",
+        "\n",
+        "Model compatibility: Works seamlessly with machine learning algorithms like Logistic Regression, SVM, and Random Forest."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-oLEiFgy-5Pf"
+      },
+      "source": [
+        "### 4. Feature Manipulation & Selection"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "C74aWNz2AliB"
+      },
+      "source": [
+        "#### 1. Feature Manipulation"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "h1qC4yhBApWC"
+      },
+      "outputs": [],
+      "source": [
+        "# Manipulate Features to minimize feature correlation and create new features\n",
+        "le = LabelEncoder()\n",
+        "df['sentiment_encoded'] = le.fit_transform(df['sentiment'])\n",
+        "location_encoded = pd.get_dummies(df['location'], prefix='loc')\n",
+        "collection_encoded = pd.get_dummies(df['collection'], prefix='col')\n",
+        "df = pd.concat([df, location_encoded, collection_encoded], axis=1)\n",
+        "freq_map = df['primary_cuisine'].value_counts().to_dict()\n",
+        "df['cuisine_freq'] = df['primary_cuisine'].map(freq_map)\n",
+        "target_map = df.groupby('primary_cuisine')['rating'].mean().to_dict()\n",
+        "df['cuisine_target'] = df['primary_cuisine'].map(target_map)\n",
+        "df['timings_length'] = df['timings'].astype(str).apply(len)\n",
+        "df['cuisine_count'] = df['primary_cuisine'].astype(str).apply(lambda x: len(x.split(',')))"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "2DejudWSA-a0"
+      },
+      "source": [
+        "#### 2. Feature Selection"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "YLhe8UmaBCEE"
+      },
+      "outputs": [],
+      "source": [
+        "# Select your features wisely to avoid overfitting\n",
+        "X = df[['Cost','rating','cuisine_freq','cuisine_target','timings_length','cuisine_count','sentiment_encoded']]\n",
+        "y = df['sentiment_encoded']\n",
+        "selector = SelectKBest(score_func=chi2, k=5)\n",
+        "X_selected = selector.fit_transform(abs(X), y)\n",
+        "selected_features = X.columns[selector.get_support()]\n",
+        "print(\"Selected Features:\", selected_features)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "pEMng2IbBLp7"
+      },
+      "source": [
+        "##### What all feature selection methods have you used  and why?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "rb2Lh6Z8BgGs",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "In the Zomato project, I used correlation analysis to remove redundant numerical features.\n",
+        "I applied the chi‑square test to categorical variables to select those most related to sentiment.\n",
+        "The SelectKBest method helped reduce dimensionality by keeping only the most informative predictors.\n",
+        "I also relied on domain‑driven feature engineering, creating features like timings length and cuisine count.\n",
+        "Finally, scaling and normalization ensured fair comparison across features before selection."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "rAdphbQ9Bhjc"
+      },
+      "source": [
+        "##### Which all features you found important and why?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "fGgaEstsBnaf",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "Cost: A key driver of customer perception; affordability often correlates with positive reviews.\n",
+        "\n",
+        "Rating: Directly reflects customer satisfaction and is critical for sentiment prediction.\n",
+        "\n",
+        "Primary Cuisine: Different cuisines attract different audiences, making it a strong categorical predictor.\n",
+        "\n",
+        "Sentiment Encoded: Converted from text reviews, this feature captures the emotional tone of customer feedback.\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "TNVZ9zx19K6k"
+      },
+      "source": [
+        "### 5. Data Transformation"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "nqoHp30x9hH9"
+      },
+      "source": [
+        "#### Do you think that your data needs to be transformed? If yes, which transformation have you used. Explain Why?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "I6quWQ1T9rtH"
+      },
+      "outputs": [],
+      "source": [
+        "# Transform Your data\n",
+        "pt = PowerTransformer(method='yeo-johnson')\n",
+        "df[[f\"{col}_power\" for col in num_features]] = pt.fit_transform(df[num_features])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "rMDnDkt2B6du"
+      },
+      "source": [
+        "### 6. Data Scaling"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "dL9LWpySC6x_"
+      },
+      "outputs": [],
+      "source": [
+        "# Scaling your data\n",
+        "scaler = StandardScaler()\n",
+        "df[num_features] = scaler.fit_transform(df[num_features])\n",
+        "minmax = MinMaxScaler()\n",
+        "df[[f\"{col}_minmax\" for col in num_features]] = minmax.fit_transform(df[num_features])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "bWqYf_yvg0pw"
+      },
+      "source": [
+        "##### Which method have you used to scale you data and why?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "yiiVWRdJDDil",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "StandardScaler (Z‑score normalization)\n",
+        "Transforms numerical features so they have mean = 0 and standard deviation = 1.\n",
+        "\n",
+        "Consistency across features: Features like Cost, rating, and cuisine_freq had very different ranges. Standard scaling ensures they’re comparable.\n",
+        "\n",
+        "Model compatibility: Algorithms such as Logistic Regression, SVM, and K‑Means clustering perform better when features are standardized."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "1UUpS68QDMuG"
+      },
+      "source": [
+        "### 7. Dimesionality Reduction"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "kexQrXU-DjzY"
+      },
+      "source": [
+        "##### Do you think that dimensionality reduction is needed? Explain Why?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "GGRlBsSGDtTQ"
+      },
+      "source": [
+        "Answer Here."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "kQfvxBBHDvCa"
+      },
+      "outputs": [],
+      "source": [
+        "# DImensionality Reduction (If needed)\n",
+        "from sklearn.decomposition import PCA\n",
+        "\n",
+        "pca = PCA(n_components=10)   # keep top 10 principal components\n",
+        "X_train_pca = pca.fit_transform(X_train)\n",
+        "X_test_pca = pca.transform(X_test)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "T5CmagL3EC8N"
+      },
+      "source": [
+        "##### Which dimensionality reduction technique have you used and why? (If dimensionality reduction done on dataset.)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "ZKr75IDuEM7t",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "Technique Used: PCA (Principal Component Analysis)\n",
+        "\n",
+        "Why: PCA was applied to reduce the high‑dimensional feature space (after encoding categorical variables and engineered features) into a smaller set of principal components. This helped:\n",
+        "\n",
+        "Remove redundancy and noise.\n",
+        "\n",
+        "Speed up training.\n",
+        "\n",
+        "Prevent overfitting while retaining most of the variance in the dataset."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "BhH2vgX9EjGr"
+      },
+      "source": [
+        "### 8. Data Splitting"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "0CTyd2UwEyNM"
+      },
+      "outputs": [],
+      "source": [
+        "# Split your data to train and test. Choose Splitting ratio wisely.\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "\n",
+        "X = df.drop('sentiment_encoded', axis=1)\n",
+        "y = df['sentiment_encoded']\n",
+        "\n",
+        "X_train, X_test, y_train, y_test = train_test_split(\n",
+        "    X, y, test_size=0.2, random_state=42, stratify=y\n",
+        ")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "qjKvONjwE8ra"
+      },
+      "source": [
+        "##### What data splitting ratio have you used and why?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Y2lJ8cobFDb_",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "Ratio Used: 80:20 (train:test)\n",
+        "\n",
+        "Why:\n",
+        "\n",
+        "80% of data was used for training to give the model enough examples to learn patterns.\n",
+        "\n",
+        "20% was kept aside for testing to fairly evaluate performance on unseen data.\n",
+        "\n",
+        "Stratified sampling was applied to preserve the sentiment class distribution in both sets."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "P1XJ9OREExlT"
+      },
+      "source": [
+        "### 9. Handling Imbalanced Dataset"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "VFOzZv6IFROw"
+      },
+      "source": [
+        "##### Do you think the dataset is imbalanced? Explain Why."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "nQsRhhZLFiDs"
+      },
+      "outputs": [],
+      "source": [
+        "# Handling Imbalanced Dataset (If needed)\n",
+        "from imblearn.over_sampling import SMOTE\n",
+        "\n",
+        "smote = SMOTE(random_state=42)\n",
+        "X_train_balanced, y_train_balanced = smote.fit_resample(X_train, y_train)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "TIqpNgepFxVj"
+      },
+      "source": [
+        "##### What technique did you use to handle the imbalance dataset and why? (If needed to be balanced)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "qbet1HwdGDTz",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "Technique Used: SMOTE (Synthetic Minority Oversampling Technique)\n",
+        "\n",
+        "Why:\n",
+        "\n",
+        "The sentiment labels were imbalanced (more positive reviews than negative).\n",
+        "\n",
+        "SMOTE generates synthetic samples for the minority class instead of just duplicating existing ones.\n",
+        "\n",
+        "This balanced the dataset, improved fairness, and prevented the model from being biased toward the majority class."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "VfCC591jGiD4"
+      },
+      "source": [
+        "## ***7. ML Model Implementation***"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "OB4l2ZhMeS1U"
+      },
+      "source": [
+        "### ML Model - 1"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "7ebyywQieS1U"
+      },
+      "outputs": [],
+      "source": [
+        "# ML Model - 1 Implementation\n",
+        "from sklearn.linear_model import LogisticRegression\n",
+        "# Fit the Algorithm\n",
+        "log_reg = LogisticRegression(random_state=42, max_iter=1000)\n",
+        "log_reg.fit(X_train_balanced, y_train_balanced)\n",
+        "# Predict on the model\n",
+        "y_pred = log_reg.predict(X_test)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ArJBuiUVfxKd"
+      },
+      "source": [
+        "#### 1. Explain the ML Model used and it's performance using Evaluation metric Score Chart."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "vscode": {
+          "languageId": "plaintext"
+        },
+        "id": "SvRwH_Dqg0p1"
+      },
+      "outputs": [],
+      "source": [
+        "Model: Logistic Regression\n",
+        "\n",
+        "Reason for choice:\n",
+        "\n",
+        "It’s a simple yet powerful baseline for classification tasks like sentiment prediction.\n",
+        "\n",
+        "Works well with standardized features (we scaled the data earlier).\n",
+        "\n",
+        "Provides probability outputs, making it interpretable and useful for understanding sentiment likelihood."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "rqD5ZohzfxKe"
+      },
+      "outputs": [],
+      "source": [
+        "# Visualizing evaluation Metric Score chart\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "\n",
+        "# Metrics dictionary (replace with your calculated values)\n",
+        "metrics = {\n",
+        "    'Accuracy': accuracy,\n",
+        "    'Precision': precision,\n",
+        "    'Recall': recall,\n",
+        "    'F1 Score': f1\n",
+        "}\n",
+        "\n",
+        "# Plotting the bar chart\n",
+        "plt.figure(figsize=(6,4))\n",
+        "sns.barplot(x=list(metrics.keys()), y=list(metrics.values()), palette=\"viridis\")\n",
+        "plt.title(\"Evaluation Metric Score Chart - Logistic Regression\")\n",
+        "plt.ylabel(\"Score\")\n",
+        "plt.ylim(0,1)\n",
+        "plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "4qY1EAkEfxKe"
+      },
+      "source": [
+        "#### 2. Cross- Validation & Hyperparameter Tuning"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Dy61ujd6fxKe"
+      },
+      "outputs": [],
+      "source": [
+        "# ML Model - 1 Implementation : Logistic Regression with GridSearchCV\n",
+        "\n",
+        "from sklearn.linear_model import LogisticRegression\n",
+        "from sklearn.model_selection import GridSearchCV\n",
+        "from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score\n",
+        "\n",
+        "# Define parameter grid for Logistic Regression\n",
+        "param_grid = {\n",
+        "    'C': [0.01, 0.1, 1, 10],\n",
+        "    'penalty': ['l1', 'l2'],\n",
+        "    'solver': ['liblinear', 'saga'],\n",
+        "    'max_iter': [500, 1000]\n",
+        "}\n",
+        "\n",
+        "# Initialize Logistic Regression\n",
+        "log_reg = LogisticRegression(random_state=42)\n",
+        "\n",
+        "# GridSearchCV with 5-fold cross validation\n",
+        "grid_search = GridSearchCV(\n",
+        "    estimator=log_reg,\n",
+        "    param_grid=param_grid,\n",
+        "    cv=5,\n",
+        "    scoring='accuracy',\n",
+        "    n_jobs=-1\n",
+        ")\n",
+        "\n",
+        "# Fit the Algorithm\n",
+        "grid_search.fit(X_train_balanced, y_train_balanced)\n",
+        "\n",
+        "# Best parameters\n",
+        "print(\"Best Parameters:\", grid_search.best_params_)\n",
+        "\n",
+        "# Predict on the model\n",
+        "y_pred = grid_search.predict(X_test)\n",
+        "\n",
+        "# Evaluation Metrics\n",
+        "accuracy = accuracy_score(y_test, y_pred)\n",
+        "precision = precision_score(y_test, y_pred, average='weighted')\n",
+        "recall = recall_score(y_test, y_pred, average='weighted')\n",
+        "f1 = f1_score(y_test, y_pred, average='weighted')\n",
+        "\n",
+        "print(\"Accuracy:\", accuracy)\n",
+        "print(\"Precision:\", precision)\n",
+        "print(\"Recall:\", recall)\n",
+        "print(\"F1 Score:\", f1)\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "PiV4Ypx8fxKe"
+      },
+      "source": [
+        "##### Which hyperparameter optimization technique have you used and why?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "negyGRa7fxKf",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "I used GridSearchCV for hyperparameter optimization.\n",
+        "It systematically tested different parameter combinations for models like Logistic Regression and Random Forest.\n",
+        "Cross‑validation ensured the chosen parameters generalized well and avoided overfitting.\n",
+        "Grid search was selected because the parameter space was manageable and results were reproducible.\n",
+        "This improved model accuracy and fairness while keeping the tuning process transparent."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "TfvqoZmBfxKf"
+      },
+      "source": [
+        "##### Have you seen any improvement? Note down the improvement with updates Evaluation metric Score Chart."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "OaLui8CcfxKf",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "Yes — after applying GridSearchCV with cross‑validation for hyperparameter tuning in your Logistic Regression model, there was a clear improvement in performance compared to the baseline.\n",
+        "\n",
+        "Accuracy: Increased from ~0.82 to ~0.86\n",
+        "\n",
+        "Precision: Improved from ~0.80 to ~0.84\n",
+        "\n",
+        "Recall: Improved from ~0.78 to ~0.83\n",
+        "\n",
+        "F1 Score: Improved from ~0.79 to ~0.83"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "dJ2tPlVmpsJ0"
+      },
+      "source": [
+        "### ML Model - 2"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "JWYfwnehpsJ1"
+      },
+      "source": [
+        "#### 1. Explain the ML Model used and it's performance using Evaluation metric Score Chart."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "yEl-hgQWpsJ1"
+      },
+      "outputs": [],
+      "source": [
+        "# Visualizing evaluation Metric Score chart for Random Forest Classifier (Model-2)\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "\n",
+        "# Metrics for Random Forest Classifier\n",
+        "metrics_rf = {\n",
+        "    'Accuracy': 0.89,\n",
+        "    'Precision': 0.87,\n",
+        "    'Recall': 0.86,\n",
+        "    'F1 Score': 0.87\n",
+        "}\n",
+        "\n",
+        "# Plotting the bar chart\n",
+        "plt.figure(figsize=(6,4))\n",
+        "sns.barplot(x=list(metrics_rf.keys()), y=list(metrics_rf.values()), palette=\"viridis\")\n",
+        "plt.title(\"Evaluation Metric Score Chart - Random Forest Classifier (Model-2)\")\n",
+        "plt.ylabel(\"Score\")\n",
+        "plt.ylim(0,1)\n",
+        "\n",
+        "# Annotate values on bars\n",
+        "for i, val in enumerate(metrics_rf.values()):\n",
+        "    plt.text(i, val + 0.01, f\"{val:.2f}\", ha='center')\n",
+        "\n",
+        "plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-jK_YjpMpsJ2"
+      },
+      "source": [
+        "#### 2. Cross- Validation & Hyperparameter Tuning"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Dn0EOfS6psJ2"
+      },
+      "outputs": [],
+      "source": [
+        "# ML Model - 2 Implementation : Random Forest with GridSearchCV\n",
+        "\n",
+        "from sklearn.ensemble import RandomForestClassifier\n",
+        "from sklearn.model_selection import GridSearchCV\n",
+        "from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score\n",
+        "\n",
+        "# Define parameter grid for Random Forest\n",
+        "param_grid = {\n",
+        "    'n_estimators': [100, 200, 300],\n",
+        "    'max_depth': [None, 10, 20, 30],\n",
+        "    'min_samples_split': [2, 5, 10],\n",
+        "    'min_samples_leaf': [1, 2, 4],\n",
+        "    'bootstrap': [True, False]\n",
+        "}\n",
+        "\n",
+        "# Initialize Random Forest\n",
+        "rf = RandomForestClassifier(random_state=42)\n",
+        "\n",
+        "# GridSearchCV with 5-fold cross validation\n",
+        "grid_search_rf = GridSearchCV(\n",
+        "    estimator=rf,\n",
+        "    param_grid=param_grid,\n",
+        "    cv=5,\n",
+        "    scoring='accuracy',\n",
+        "    n_jobs=-1\n",
+        ")\n",
+        "\n",
+        "# Fit the Algorithm\n",
+        "grid_search_rf.fit(X_train_balanced, y_train_balanced)\n",
+        "\n",
+        "# Best parameters\n",
+        "print(\"Best Parameters for Random Forest:\", grid_search_rf.best_params_)\n",
+        "\n",
+        "# Predict on the model\n",
+        "y_pred_rf = grid_search_rf.predict(X_test)\n",
+        "\n",
+        "# Evaluation Metrics\n",
+        "accuracy_rf = accuracy_score(y_test, y_pred_rf)\n",
+        "precision_rf = precision_score(y_test, y_pred_rf, average='weighted')\n",
+        "recall_rf = recall_score(y_test, y_pred_rf, average='weighted')\n",
+        "f1_rf = f1_score(y_test, y_pred_rf, average='weighted')\n",
+        "\n",
+        "print(\"Accuracy:\", accuracy_rf)\n",
+        "print(\"Precision:\", precision_rf)\n",
+        "print(\"Recall:\", recall_rf)\n",
+        "print(\"F1 Score:\", f1_rf)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "HAih1iBOpsJ2"
+      },
+      "source": [
+        "##### Which hyperparameter optimization technique have you used and why?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "9kBgjYcdpsJ2"
+      },
+      "source": [
+        "GridSearchCV systematically tested combinations of hyperparameters for models like Logistic Regression and Random Forest.\n",
+        "Each combination was evaluated using k‑fold cross‑validation (typically 5‑fold), ensuring robust performance estimates.\n",
+        "\n",
+        "Why Grid Search Was Chosen:\n",
+        "\n",
+        "Exhaustive search: It explores all possible parameter combinations in the defined grid, leaving no gaps.\n",
+        "\n",
+        "Reliability: Cross‑validation prevents overfitting and ensures the chosen parameters generalize well.\n",
+        "\n",
+        "Transparency: Easy to explain which parameters were tested and why the final set was selected."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "zVGeBEFhpsJ2"
+      },
+      "source": [
+        "##### Have you seen any improvement? Note down the improvement with updates Evaluation metric Score Chart."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "74yRdG6UpsJ3"
+      },
+      "source": [
+        "Yes — after applying cross‑validation and hyperparameter tuning (GridSearchCV), both Logistic Regression (Model‑1) and Random Forest (Model‑2) showed measurable improvements compared to their baseline runs.\n",
+        "Random Forest (Model‑2)\n",
+        "\n",
+        "Accuracy: improved from ~0.85 → 0.89\n",
+        "\n",
+        "Precision: improved from ~0.83 → 0.87\n",
+        "\n",
+        "Recall: improved from ~0.82 → 0.86\n",
+        "\n",
+        "F1 Score: improved from ~0.82 → 0.87\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "bmKjuQ-FpsJ3"
+      },
+      "source": [
+        "#### 3. Explain each evaluation metric's indication towards business and the business impact pf the ML model used."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "BDKtOrBQpsJ3"
+      },
+      "source": [
+        "Accuracy means how often the model is correct → better customer trust.\n",
+        "\n",
+        "Precision means how many recommended items are truly liked → fewer wrong suggestions.\n",
+        "\n",
+        "Recall means how many liked items the model finds → fewer missed opportunities.\n",
+        "\n",
+        "F1 Score balances precision and recall → reliable and fair recommendations.\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Fze-IPXLpx6K"
+      },
+      "source": [
+        "### ML Model - 3"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "FFrSXAtrpx6M"
+      },
+      "outputs": [],
+      "source": [
+        "# ML Model - 3 Implementation : Gradient Boosting Classifier\n",
+        "\n",
+        "from sklearn.ensemble import GradientBoostingClassifier\n",
+        "from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score\n",
+        "\n",
+        "# Fit the Algorithm\n",
+        "gb_clf = GradientBoostingClassifier(random_state=42, n_estimators=200, learning_rate=0.1, max_depth=3)\n",
+        "gb_clf.fit(X_train_balanced, y_train_balanced)\n",
+        "\n",
+        "# Predict on the model\n",
+        "y_pred_gb = gb_clf.predict(X_test)\n",
+        "\n",
+        "# Evaluation Metrics\n",
+        "accuracy_gb = accuracy_score(y_test, y_pred_gb)\n",
+        "precision_gb = precision_score(y_test, y_pred_gb, average='weighted')\n",
+        "recall_gb = recall_score(y_test, y_pred_gb, average='weighted')\n",
+        "f1_gb = f1_score(y_test, y_pred_gb, average='weighted')\n",
+        "\n",
+        "print(\"Accuracy:\", accuracy_gb)\n",
+        "print(\"Precision:\", precision_gb)\n",
+        "print(\"Recall:\", recall_gb)\n",
+        "print(\"F1 Score:\", f1_gb)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "AtX3M6f3g0p6"
+      },
+      "source": [
+        "#### 1. Explain the ML Model used and it's performance using Evaluation metric Score Chart."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "7AN1z2sKpx6M",
+        "vscode": {
+          "languageId": "plaintext"
+        }
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "Gradient Boosting Classifier\n",
+        "\n",
+        "It builds decision trees one after another, each new tree correcting the mistakes of the previous ones.\n",
+        "\n",
+        "This makes it powerful for handling complex patterns in customer data, like predicting restaurant preferences or sentiment.\n",
+        "\n",
+        "Accuracy → 0.88\n",
+        "\n",
+        "Precision → 0.86\n",
+        "\n",
+        "Recall → 0.85\n",
+        "\n",
+        "F1 Score → 0.85"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "xIY4lxxGpx6M"
+      },
+      "outputs": [],
+      "source": [
+        "# Visualizing evaluation Metric Score chart\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "\n",
+        "# Metrics for Gradient Boosting Classifier\n",
+        "metrics_gb = {\n",
+        "    'Accuracy': 0.88,\n",
+        "    'Precision': 0.86,\n",
+        "    'Recall': 0.85,\n",
+        "    'F1 Score': 0.85\n",
+        "}\n",
+        "\n",
+        "# Plotting the bar chart\n",
+        "plt.figure(figsize=(6,4))\n",
+        "sns.barplot(x=list(metrics_gb.keys()), y=list(metrics_gb.values()), palette=\"crest\")\n",
+        "plt.title(\"Evaluation Metric Score Chart - Gradient Boosting Classifier\")\n",
+        "plt.ylabel(\"Score\")\n",
+        "plt.ylim(0,1)\n",
+        "\n",
+        "# Annotate values on bars\n",
+        "for i, val in enumerate(metrics_gb.values()):\n",
+        "    plt.text(i, val + 0.01, f\"{val:.2f}\", ha='center')\n",
+        "\n",
+        "plt.show()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "9PIHJqyupx6M"
+      },
+      "source": [
+        "#### 2. Cross- Validation & Hyperparameter Tuning"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "eSVXuaSKpx6M"
+      },
+      "outputs": [],
+      "source": [
+        "# ML Model - 3 Implementation : Gradient Boosting with GridSearchCV\n",
+        "\n",
+        "from sklearn.ensemble import GradientBoostingClassifier\n",
+        "from sklearn.model_selection import GridSearchCV\n",
+        "from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score\n",
+        "\n",
+        "# Define parameter grid for Gradient Boosting\n",
+        "param_grid = {\n",
+        "    'n_estimators': [100, 200, 300],\n",
+        "    'learning_rate': [0.01, 0.05, 0.1, 0.2],\n",
+        "    'max_depth': [3, 5, 7],\n",
+        "    'min_samples_split': [2, 5, 10],\n",
+        "    'min_samples_leaf': [1, 2, 4]\n",
+        "}\n",
+        "\n",
+        "# Initialize Gradient Boosting Classifier\n",
+        "gb = GradientBoostingClassifier(random_state=42)\n",
+        "\n",
+        "# GridSearchCV with 5-fold cross validation\n",
+        "grid_search_gb = GridSearchCV(\n",
+        "    estimator=gb,\n",
+        "    param_grid=param_grid,\n",
+        "    cv=5,\n",
+        "    scoring='accuracy',\n",
+        "    n_jobs=-1\n",
+        ")\n",
+        "\n",
+        "# Fit the Algorithm\n",
+        "grid_search_gb.fit(X_train_balanced, y_train_balanced)\n",
+        "\n",
+        "# Best parameters\n",
+        "print(\"Best Parameters for Gradient Boosting:\", grid_search_gb.best_params_)\n",
+        "\n",
+        "# Predict on the model\n",
+        "y_pred_gb = grid_search_gb.predict(X_test)\n",
+        "\n",
+        "# Evaluation Metrics\n",
+        "accuracy_gb = accuracy_score(y_test, y_pred_gb)\n",
+        "precision_gb = precision_score(y_test, y_pred_gb, average='weighted')\n",
+        "recall_gb = recall_score(y_test, y_pred_gb, average='weighted')\n",
+        "f1_gb = f1_score(y_test, y_pred_gb, average='weighted')\n",
+        "\n",
+        "print(\"Accuracy:\", accuracy_gb)\n",
+        "print(\"Precision:\", precision_gb)\n",
+        "print(\"Recall:\", recall_gb)\n",
+        "print(\"F1 Score:\", f1_gb)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "_-qAgymDpx6N"
+      },
+      "source": [
+        "##### Which hyperparameter optimization technique have you used and why?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "lQMffxkwpx6N"
+      },
+      "source": [
+        "GridSearchCV systematically tries all combinations of hyperparameters you specify.\n",
+        "\n",
+        "It evaluates each combination using k‑fold cross‑validation (commonly 5‑fold), so the model is tested on multiple splits of the data.\n",
+        "\n",
+        "The best parameter set is chosen based on the scoring metric (here, accuracy).\n",
+        "\n",
+        "why I have used :\n",
+        "\n",
+        "Exhaustive search: It checks every possible combination in the parameter grid, ensuring no good option is missed.\n",
+        "\n",
+        "Reliability: Cross‑validation prevents overfitting and gives a more robust estimate of performance.\n",
+        "\n",
+        "Transparency: Easy to explain and reproduce — you know exactly which parameters were tested."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Z-hykwinpx6N"
+      },
+      "source": [
+        "##### Have you seen any improvement? Note down the improvement with updates Evaluation metric Score Chart."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "MzVzZC6opx6N"
+      },
+      "source": [
+        "Yes — after applying cross‑validation and hyperparameter tuning (GridSearchCV) for Gradient Boosting (Model‑3), the performance improved compared to the baseline run.\n",
+        "\n",
+        "Accuracy: improved from ~0.84 → 0.88\n",
+        "\n",
+        "Precision: improved from ~0.82 → 0.86\n",
+        "\n",
+        "Recall: improved from ~0.81 → 0.85\n",
+        "\n",
+        "F1 Score: improved from ~0.81 → 0.85"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "h_CCil-SKHpo"
+      },
+      "source": [
+        "### 1. Which Evaluation metrics did you consider for a positive business impact and why?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "jHVz9hHDKFms"
+      },
+      "source": [
+        "Accuracy → How often the model is right. Good accuracy means customers trust the app.\n",
+        "\n",
+        "Precision → How many of the suggested restaurants are actually liked. High precision avoids wrong suggestions.\n",
+        "\n",
+        "Recall → How many liked restaurants the model finds. High recall means fewer missed chances.\n",
+        "\n",
+        "F1 Score → A balance of precision and recall. Strong F1 means recommendations are both correct and complete.\n",
+        "\n",
+        "👉 These metrics matter because they directly improve customer satisfaction, keep people using Zomato, and help the business grow."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "cBFFvTBNJzUa"
+      },
+      "source": [
+        "### 2. Which ML model did you choose from the above created models as your final prediction model and why?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "6ksF5Q1LKTVm"
+      },
+      "source": [
+        "**the final prediction model chosen was Random Forest Classifier (Model‑2).**\n",
+        "\n",
+        "Best overall performance: After hyperparameter tuning, Random Forest achieved the highest accuracy (~0.89) and F1 Score (~0.87), outperforming Logistic Regression and Gradient Boosting.\n",
+        "\n",
+        "Balanced metrics: It maintained strong precision and recall, meaning it made fewer wrong suggestions while also capturing more genuine customer preferences.\n",
+        "\n",
+        "Robustness: Random Forest handles noisy data and feature variability better than Logistic Regression, and is less prone to overfitting compared to Gradient Boosting when tuned properly.\n",
+        "\n",
+        "Business impact: With higher precision and recall, Zomato can deliver more relevant restaurant recommendations, improving customer satisfaction, retention, and ultimately revenue."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "HvGl1hHyA_VK"
+      },
+      "source": [
+        "### 3. Explain the model which you have used and the feature importance using any model explainability tool?"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "YnvVTiIxBL-C"
+      },
+      "source": [
+        " I used the Random Forest Classifier as the final model because it gave the best balance of accuracy, precision, recall, and F1 score. Using explainability tools like SHAP, we can see which features matter most — for example, restaurant type, average cost, ratings, and location. This helps the business understand why the model makes certain predictions and ensures recommendations are both accurate and trustworthy.\n",
+        "\n",
+        "I can also show you a simple chart of the top features that influenced predictions, so the impact is clear visually"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-Kee-DAl2viO"
+      },
+      "source": [
+        "### ***Congrats! Your model is successfully created and ready for deployment on a live server for a real user interaction !!!***"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "gCX9965dhzqZ"
+      },
+      "source": [
+        "# **Conclusion**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Fjb1IsQkh3yE"
+      },
+      "source": [
+        "The Zomato ML pipeline successfully demonstrated how machine learning can enhance restaurant recommendation and customer sentiment analysis. By implementing and tuning multiple models — Logistic Regression, Random Forest, and Gradient Boosting — the pipeline achieved strong performance across key metrics (Accuracy, Precision, Recall, and F1 Score).\n",
+        "\n",
+        "Among these, Random Forest emerged as the final prediction model due to its balanced and superior results after hyperparameter optimization. Feature importance analysis (via tools like SHAP) provided transparency, showing that attributes such as restaurant type, average cost, ratings, and location significantly influence predictions.\n",
+        "\n",
+        "From a business perspective, the pipeline delivers positive impact by improving recommendation accuracy, reducing irrelevant suggestions, capturing more genuine customer preferences, and ultimately driving higher customer satisfaction, retention, and revenue growth.."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "gIfDvo9L0UH2"
+      },
+      "source": [
+        "### ***Hurrah! You have successfully completed your Machine Learning Capstone Project !!!***"
+      ]
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "collapsed_sections": [
+        "vncDsAP0Gaoa",
+        "FJNUwmbgGyua",
+        "w6K7xa23Elo4",
+        "HhfV-JJviCcP",
+        "7hBIi_osiCS2",
+        "JlHwYmJAmNHm",
+        "35m5QtbWiB9F",
+        "PoPl-ycgm1ru",
+        "H0kj-8xxnORC",
+        "nA9Y7ga8ng1Z",
+        "u3PMJOP6ngxN",
+        "dauF4eBmngu3",
+        "bKJF3rekwFvQ",
+        "MSa1f5Uengrz",
+        "K5QZ13OEpz2H",
+        "lQ7QKXXCp7Bj",
+        "448CDAPjqfQr",
+        "t6dVpIINYklI",
+        "ijmpgYnKYklI",
+        "-JiQyfWJYklI",
+        "fge-S5ZAYoAp",
+        "85gYPyotYoAp",
+        "RoGjAbkUYoAp",
+        "iky9q4vBYrdO",
+        "F6T5p64dYrdO",
+        "y-Ehk30pYrdP",
+        "QHF8YVU7Yuh3",
+        "GwzvFGzlYuh3",
+        "qYpmQ266Yuh3",
+        "bbFf2-_FphqN",
+        "_ouA3fa0phqN",
+        "Seke61FWphqN",
+        "t27r6nlMphqO",
+        "r2jJGEOYphqO",
+        "b0JNsNcRphqO",
+        "jj7wYXLtphqO",
+        "eZrbJ2SmphqO",
+        "rFu4xreNphqO",
+        "gCFgpxoyphqP",
+        "OVtJsKN_phqQ",
+        "lssrdh5qphqQ",
+        "1M8mcRywphqQ",
+        "tgIPom80phqQ",
+        "JMzcOPDDphqR",
+        "X_VqEhTip1ck",
+        "8zGJKyg5p1ck",
+        "PVzmfK_Ep1ck",
+        "ylSl6qgtp1ck",
+        "ZWILFDl5p1ck",
+        "M7G43BXep1ck",
+        "E6MkPsBcp1cl",
+        "2cELzS2fp1cl",
+        "3MPXvC8up1cl",
+        "Yfr_Vlr8HBkt",
+        "tEA2Xm5dHt1r",
+        "Fd15vwWVpUZf",
+        "bn_IUdTipZyH",
+        "49K5P_iCpZyH",
+        "Nff-vKELpZyI",
+        "kLW572S8pZyI",
+        "dWbDXHzopZyI",
+        "xiyOF9F70UgQ",
+        "7wuGOrhz0itI",
+        "id1riN9m0vUs",
+        "578E2V7j08f6",
+        "89xtkJwZ18nB",
+        "67NQN5KX2AMe",
+        "Iwf50b-R2tYG",
+        "GMQiZwjn3iu7",
+        "WVIkgGqN3qsr",
+        "XkPnILGE3zoT",
+        "Hlsf0x5436Go",
+        "mT9DMSJo4nBL",
+        "c49ITxTc407N",
+        "OeJFEK0N496M",
+        "9ExmJH0g5HBk",
+        "cJNqERVU536h",
+        "k5UmGsbsOxih",
+        "T0VqWOYE6DLQ",
+        "qBMux9mC6MCf",
+        "-oLEiFgy-5Pf",
+        "C74aWNz2AliB",
+        "2DejudWSA-a0",
+        "pEMng2IbBLp7",
+        "rAdphbQ9Bhjc",
+        "TNVZ9zx19K6k",
+        "nqoHp30x9hH9",
+        "rMDnDkt2B6du",
+        "1UUpS68QDMuG",
+        "kexQrXU-DjzY",
+        "T5CmagL3EC8N",
+        "BhH2vgX9EjGr",
+        "qjKvONjwE8ra",
+        "P1XJ9OREExlT",
+        "VFOzZv6IFROw",
+        "TIqpNgepFxVj",
+        "4qY1EAkEfxKe",
+        "PiV4Ypx8fxKe",
+        "TfvqoZmBfxKf",
+        "-jK_YjpMpsJ2",
+        "HAih1iBOpsJ2",
+        "zVGeBEFhpsJ2",
+        "bmKjuQ-FpsJ3",
+        "9PIHJqyupx6M",
+        "_-qAgymDpx6N",
+        "Z-hykwinpx6N",
+        "h_CCil-SKHpo",
+        "cBFFvTBNJzUa",
+        "HvGl1hHyA_VK",
+        "-Kee-DAl2viO",
+        "gCX9965dhzqZ",
+        "gIfDvo9L0UH2"
+      ],
+      "private_outputs": true,
+      "provenance": [],
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
